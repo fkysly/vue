@@ -113,7 +113,7 @@ export function createInstance (
     Vue: subVue,
     weex: weexInstanceVar,
     __weex_require_module__: weexInstanceVar.require // deprecated
-  }, timerAPIs)
+  }, timerAPIs, env.services)
   callFunction(instanceVars, appCode)
 
   // Send `createFinish` signal to native.
