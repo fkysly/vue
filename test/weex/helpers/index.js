@@ -2,6 +2,9 @@ import * as Vue from '../../../packages/weex-vue-framework'
 import { compile } from '../../../packages/weex-template-compiler'
 import { Runtime, Instance } from 'weex-vdom-tester'
 import { config } from 'weex-js-runtime'
+import CallbackManager from './callback-manager'
+
+export { CallbackManager }
 
 // http://stackoverflow.com/a/35478115
 const matchOperatorsRe = /[|\\{}()[\]^$+*?.]/g

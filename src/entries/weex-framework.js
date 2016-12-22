@@ -54,7 +54,7 @@ function clear (obj) {
  * @param {string} appCode
  * @param {object} config
  * @param {object} data
- * @param {object} env { info, config, services }
+ * @param {object} env { info, config, callbacks, services }
  */
 export function createInstance (
   instanceId,
@@ -69,19 +69,9 @@ export function createInstance (
   // Virtual-DOM object.
   const document = new renderer.Document(instanceId, config.bundleUrl)
 
-  // All function/callback of parameters before sent to native
-  // will be converted as an id. So `callbacks` is used to store
-  // these real functions. When a callback invoked and won't be
-  // called again, it should be removed from here automatically.
-  const callbacks = []
-
-  // The latest callback id, incremental.
-  const callbackId = 1
-
-  instances[instanceId] = {
-    instanceId, config, data,
-    document, callbacks, callbackId
-  }
+  instances[instanceId] = Object.assign({
+    instanceId, config, data, document
+  }, env)
 
   // Prepare native module getter and HTML5 Timer APIs.
   const moduleGetter = genModuleGetter(instanceId)
@@ -186,15 +176,7 @@ export function receiveTasks (instanceId, tasks) {
     }
     // `callback` case: find the callback by id and call it.
     if (task.method === 'callback') {
-      const [callbackId, data, ifKeepAlive] = task.args
-      const callback = callbacks[callbackId]
-      if (typeof callback === 'function') {
-        callback(data)
-        // Remove the callback from `callbacks` if it won't called again.
-        if (typeof ifKeepAlive === 'undefined' || ifKeepAlive === false) {
-          callbacks[callbackId] = undefined
-        }
-      }
+      callbacks.consume(...task.args)
     }
   })
   // Finally `updateFinish` signal needed.
@@ -334,14 +316,14 @@ function getInstanceTimer (instanceId, moduleGetter) {
         args[0](...args.slice(2))
       }
       timer.setTimeout(handler, args[1])
-      return instance.callbackId.toString()
+      return instance.callbacks.lastCallbackId.toString()
     },
     setInterval: (...args) => {
       const handler = function () {
         args[0](...args.slice(2))
       }
       timer.setInterval(handler, args[1])
-      return instance.callbackId.toString()
+      return instance.callbacks.lastCallbackId.toString()
     },
     clearTimeout: (n) => {
       timer.clearTimeout(n)
@@ -403,8 +385,7 @@ function normalize (v, instance) {
       }
       return v
     case 'function':
-      instance.callbacks[++instance.callbackId] = v
-      return instance.callbackId.toString()
+      return instance.callbacks.add(v).toString()
     default:
       return JSON.stringify(v)
   }

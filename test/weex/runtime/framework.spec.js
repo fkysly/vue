@@ -4,7 +4,8 @@ import { config } from 'weex-js-runtime'
 
 import {
   syncPromise,
-  checkRefresh
+  checkRefresh,
+  CallbackManager
 } from '../helpers/index'
 
 let sendTasksHandler = () => {}
@@ -283,7 +284,7 @@ describe('framework APIs', () => {
         },
         el: "body"
       })
-    `)
+    `, undefined, undefined, { callbacks: new CallbackManager() })
     expect(instance.getRealRoot()).toEqual({
       type: 'div',
       children: [{
@@ -455,7 +456,7 @@ describe('framework APIs', () => {
         },
         el: "body"
       })
-    `, { a: 1, b: 2 })
+    `, null, { a: 1, b: 2 })
     expect(JSON.parse(instance2.getRealRoot().children[0].attr.value)).toEqual({ a: 1, b: 2, env: DEFAULT_ENV })
   })
 
@@ -495,7 +496,7 @@ describe('framework APIs', () => {
         },
         el: "body"
       })
-    `)
+    `, new CallbackManager())
     expect(instance.getRealRoot()).toEqual({
       type: 'div',
       children: [{ type: 'text', attr: { value: '0-0' }}]
@@ -544,7 +545,7 @@ describe('framework APIs', () => {
         },
         el: "body"
       })
-    `)
+    `, undefined, undefined, { callbacks: new CallbackManager() })
 
     let callbackId
     instance.history.callNative.some(task => {
